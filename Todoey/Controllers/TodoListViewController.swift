@@ -13,30 +13,37 @@ class TodoListViewController: UITableViewController {
     //var itemArray = ["mikey","rocks","oh yeah!"]
     var itemArray = [Item]()
     
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     
-    let defaults = UserDefaults.standard
+    //let defaults = UserDefaults.standard
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let newItem1 = Item()
-        newItem1.title = "mikey2"
-        itemArray.append(newItem1)
         
-        let newItem2 = Item()
-        newItem2.title = "rocks2"
-        itemArray.append(newItem2)
         
-        let newItem3 = Item()
-        newItem3.title = "oh yeah2"
-        itemArray.append(newItem3)
+        //print(dataFilePath)
+        
+//        let newItem1 = Item()
+//        newItem1.title = "mikey2"
+//        itemArray.append(newItem1)
+//        
+//        let newItem2 = Item()
+//        newItem2.title = "rocks2"
+//        itemArray.append(newItem2)
+//        
+//        let newItem3 = Item()
+//        newItem3.title = "oh yeah2"
+//        itemArray.append(newItem3)
+        
+        loadItems()
         
         // Do any additional setup after loading the view, typically from a nib.
 
 //worked
-        if let items = defaults.array(forKey: "ToDoListArray") as? [Item] {
-            itemArray = items
-        }
+//        if let items = defaults.array(forKey: "ToDoListArray") as? [Item] {
+//            itemArray = items
+//        }
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -69,14 +76,17 @@ class TodoListViewController: UITableViewController {
         //since above code basically flips the true/false, here is a better way. just use the opposit of current status
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
-        tableView.reloadData()
+        saveItems()
+        //tableView.reloadData()
         //itemArray[indexPath.row].done
+        
+        /*
         if (tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark) {
             tableView.cellForRow(at: indexPath)?.accessoryType = .none
         } else {
             tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
         }
-        
+        */
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
@@ -96,8 +106,11 @@ class TodoListViewController: UITableViewController {
             
             self.itemArray.append(newItem)
             //self.itemArray.append(textField.text!)  //interestingly, Angela said you could do this: textField.text ?? "if blank show this"
-            self.defaults.set(self.itemArray, forKey: "ToDoListArray")
-            self.tableView.reloadData()
+            //self.defaults.set(self.itemArray, forKey: "ToDoListArray")
+            
+            self.saveItems()
+            
+            
         }
         alert.addTextField { (alertTextField) in
             alertTextField.placeholder = "Create new item"
@@ -107,6 +120,31 @@ class TodoListViewController: UITableViewController {
         present(alert, animated: true, completion: nil)
     }
     
+    
+    func saveItems() {
+        
+        let encoder = PropertyListEncoder()
+        do {
+            let data = try encoder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+        } catch {
+            print("Error encoding item array, \(error)")
+        }
+        
+        self.tableView.reloadData()
+    }
+    
+    func loadItems() {
+        
+        if let data = try? Data(contentsOf: dataFilePath!) {
+            let decoder = PropertyListDecoder()
+            do {
+                itemArray = try decoder.decode([Item].self, from: data)
+            } catch {
+                print("Error decoding item array, \(error)")
+            }
+        }
+    }
 }
 
 
